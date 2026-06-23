@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Dashboard - Fusion High</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/css/parent.css">
+    <link rel="stylesheet" href="/css/responsive-sidebar.css">
+</head>
+<body>
+    <!-- Hamburger Menu for Mobile -->
+    <div class="hamburger">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+
+    <nav class="sidebar">
+        <div class="sidebar-brand">FUSION HIGH</div>
+        <ul class="nav-list">
+            <li class="nav-item active" onclick="switchTab('overview', this)"><i class="fas fa-home"></i> Dashboard</li>
+            <li class="nav-item" onclick="switchTab('children', this)"><i class="fas fa-user-graduate"></i> My Children</li>
+            <li class="nav-item" onclick="switchTab('register-child', this)"><i class="fas fa-plus-circle"></i> Register Child</li>
+            <li class="nav-item" onclick="switchTab('announcements', this)"><i class="fas fa-bullhorn"></i> School News</li>
+            <li class="nav-item" onclick="switchTab('profile', this)"><i class="fas fa-user-circle"></i> Profile</li>
+            <li class="nav-item" onclick="switchTab('settings', this)"><i class="fas fa-cog"></i> Settings</li>
+            <li class="nav-item" onclick="switchTab('Logout', this)"><i class="fas fa-sign-out-alt"></i> Logout</li>
+        </ul>
+    </nav>
+
+    <main class="content">
+        <header class="top-bar">
+            <h1 id="view-title">Dashboard Overview</h1>
+            <div class="user-menu">
+                <span id="user-email" style="font-weight: 500; color: var(--text-muted);">parent@example.com</span>
+                <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </header>
+
+        <div class="dashboard-body">
+            <!-- Overview View -->
+            <div id="overview" class="section active">
+                <div class="grid-stats">
+                    <div class="card-stat">
+                        <div class="icon-box" style="background: #eff6ff; color: #3b82f6;"><i class="fas fa-children"></i></div>
+                        <div>
+                            <p class="stat-label">Registered Learners</p>
+                            <h2 class="stat-val" id="stat-children">0</h2>
+                        </div>
+                    </div>
+                    <div class="card-stat">
+                        <div class="icon-box" style="background: #fff7ed; color: #f59e0b;"><i class="fas fa-bell"></i></div>
+                        <div>
+                            <p class="stat-label">Active Notices</p>
+                            <h2 class="stat-val" id="stat-news">0</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <div class="card-header">Latest School News</div>
+                    <div id="latest-news">
+                        <p style="padding: 1.5rem; color: var(--text-muted);">Checking for updates...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Children View -->
+            <div id="children" class="section">
+                <div class="data-card">
+                    <div class="card-header">Academic Dependents</div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Full Name</th>
+                                    <th>Current Grade</th>
+                                    <th>National ID</th>
+                                    <th>Academic Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="children-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Progress Details (Hidden until selected) -->
+                <div id="progress-box" class="data-card hidden">
+                    <div class="card-header" id="progress-header">Subject Performance Report</div>
+                    <div style="padding: 1rem; height: 250px;">
+                        <canvas id="childTrendChart"></canvas>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Assessment Grade</th>
+                                    <th>Teacher Remarks</th>
+                                    <th>Assessment Date</th>
+                                    <th>Evaluation Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="progress-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Register Child View -->
+            <div id="register-child" class="section"></div>
+
+            <!-- Announcements View -->
+            <div id="announcements" class="section">
+                <div class="data-card">
+                    <div class="card-header">Official Communication Hub</div>
+                    <div id="news-feed"></div>
+                </div>
+            </div>
+
+            <!-- Profile View -->
+            <div id="profile" class="section">
+                <div class="data-card" style="max-width: 600px;">
+                    <div class="card-header">Account Profile</div>
+                    <div style="padding: 1.5rem;" id="profile-info"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/';
+
+        async function switchTab(tabId, el) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            const targetSection = document.getElementById(tabId);
+            targetSection.classList.add('active');
+            el.classList.add('active');
+            document.getElementById('view-title').innerText = el.innerText;
+
+            // Lazy load the registration form if it hasn't been loaded yet
+            if (tabId === 'register-child' && (!targetSection.innerHTML || targetSection.innerHTML.trim() === "")) {
+                try {
+                    const resp = await fetch('/dashboards/RegisterLearnerForm.html');
+                    targetSection.innerHTML = await resp.text();
+                } catch (e) { console.error("Failed to load form", e); }
+            }
+        }
+
+        const CAPS_SUBJECTS = {
+            'Science': ['Home Language', 'English FAL', 'Mathematics', 'Physical Sciences', 'Life Sciences', 'Geography', 'Life Orientation'],
+            'Commerce': ['Home Language', 'English FAL', 'Mathematics', 'Accounting', 'Business Studies', 'Economics', 'Life Orientation'],
+            'Tourism': ['Home Language', 'English FAL', 'Mathematical Literacy', 'Tourism', 'Business Studies', 'Geography', 'Life Orientation'],
+            'General': ['Home Language', 'English FAL', 'Mathematics', 'Natural Sciences', 'Social Sciences', 'Technology', 'EMS', 'Life Orientation', 'Creative Arts']
+        };
+
+        function toggleStream() {
+            const grade = parseInt(document.getElementById('childGrade').value);
+            const streamGroup = document.getElementById('streamGroup');
+            const streamSelect = document.getElementById('childStream');
+            
+            if (grade >= 10) {
+                streamGroup.style.display = 'block';
+                streamSelect.required = true;
+            } else {
+                streamGroup.style.display = 'none';
+                streamSelect.required = false;
+                streamSelect.value = "";
+                updateSubjectPreview();
+            }
+        }
+
+        function updateSubjectPreview() {
+            const grade = parseInt(document.getElementById('childGrade').value);
+            const stream = document.getElementById('childStream').value;
+            const list = document.getElementById('subjectList');
+            const preview = document.getElementById('subjectPreview');
+            
+            const subjects = (grade >= 10 && stream) ? CAPS_SUBJECTS[stream] : (grade < 10 ? CAPS_SUBJECTS['General'] : []);
+            preview.style.display = subjects.length ? 'block' : 'none';
+            list.innerHTML = subjects.map(s => `<li>${s}</li>`).join('');
+        }
+
+        window.extractDOB = function(idVal, targetId) {
+            if (!idVal || idVal.length < 6) return;
+            
+            const yy = idVal.substring(0, 2);
+            const mm = idVal.substring(2, 4);
+            const dd = idVal.substring(4, 6);
+            
+            const month = parseInt(mm);
+            const day = parseInt(dd);
+            if (month < 1 || month > 12 || day < 1 || day > 31) return;
+
+            const century = (parseInt(yy) <= (new Date().getFullYear() % 100)) ? '20' : '19';
+            document.getElementById(targetId).value = `${dd}/${mm}/${century}${yy}`;
+        };
+
+        async function apiRequest(endpoint) {
+            const response = await fetch(endpoint, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.status === 401 || response.status === 403) logout();
+            return response.json();
+        }
+
+        async function loadDashboard() {
+            try {
+                // Profile
+                const profile = await apiRequest('/api/profile');
+                document.getElementById('user-email').innerText = profile.email;
+                document.getElementById('profile-info').innerHTML = `
+                    <p><strong>Registered Email:</strong> ${profile.email}</p>
+                    <p><strong>User Type:</strong> <span class="badge" style="background:#e2e8f0;">${profile.role.toUpperCase()}</span></p>
+                `;
+
+                // Announcements
+                const news = await apiRequest('/api/announcements');
+                document.getElementById('stat-news').innerText = news.length;
+                const newsHtml = news.map(n => `
+                    <div class="announcement">
+                        <div class="ann-date">${new Date(n.created_at).toLocaleDateString(undefined, { dateStyle: 'long' })}</div>
+                        <div class="ann-title">${n.title}</div>
+                        <div class="ann-content">${n.content}</div>
+                    </div>
+                `).join('');
+                document.getElementById('latest-news').innerHTML = news.length ? news.slice(0, 2).map(n => `
+                    <div class="announcement"><div class="ann-title">${n.title}</div><div class="ann-content">${n.content.substring(0, 100)}...</div></div>
+                `).join('') : '<p style="padding:1.5rem">No recent updates.</p>';
+                document.getElementById('news-feed').innerHTML = news.length ? newsHtml : '<p style="padding:1.5rem">Empty feed.</p>';
+
+                // Children
+                const children = await apiRequest('/api/children');
+                document.getElementById('stat-children').innerText = children.length;
+                document.getElementById('children-list').innerHTML = children.map(c => `
+                    <tr onclick="fetchProgress(${c.id}, '${c.learner_name}')" style="cursor:pointer">
+                        <td style="font-weight:600; color:var(--secondary)">${c.learner_name} ${c.learner_surname}</td>
+                        <td>Grade ${c.grade}</td>
+                        <td>${c.learner_id_number}</td>
+                        <td><span class="badge badge-success">Enrolled</span></td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        let childChart;
+        async function fetchProgress(childId, name) {
+            const data = await apiRequest(`/api/progress/${childId}`);
+            const box = document.getElementById('progress-box');
+            box.classList.remove('hidden');
+            document.getElementById('progress-header').innerText = `Academic Progress: ${name}`;
+            
+            // Render Chart
+            const ctx = document.getElementById('childTrendChart').getContext('2d');
+            if (childChart) childChart.destroy();
+            
+            const chartData = [...data].sort((a,b) => new Date(a.date) - new Date(b.date));
+            childChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map(p => new Date(p.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Performance Trend (%)',
+                        data: chartData.map(p => p.grade),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 0, max: 100 } }
+                }
+            });
+
+            document.getElementById('progress-list').innerHTML = data.length ? data.map(p => `
+                <tr>
+                    <td style="font-weight:500">${p.subject}</td>
+                    <td><span class="badge badge-success">${p.grade}%</span></td>
+                    <td>${p.notes || 'No remarks provided'}</td>
+                    <td>${new Date(p.date).toLocaleDateString()}</td>
+                </tr>
+            `).join('') : '<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--text-muted)">No assessment records found for this learner.</td></tr>';
+            box.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function registerChild(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+
+            const grade = parseInt(document.getElementById('childGrade').value);
+            const stream = document.getElementById('childStream').value;
+            
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+
+            const payload = {
+                full_name: document.getElementById('childName').value,
+                surname: document.getElementById('childSurname').value,
+                id_number: document.getElementById('childID').value,
+                grade: grade,
+                stream: grade >= 10 ? stream : 'General',
+                subjects: (grade >= 10 && stream) ? CAPS_SUBJECTS[stream] : CAPS_SUBJECTS['General'],
+                dob: document.getElementById('childDOB').value,
+                phone: document.getElementById('childPhone').value,
+                physical_address: document.getElementById('childAddress').value,
+                country: document.getElementById('childCountry').value,
+                race: document.getElementById('childRace').value
+            };
+
+            try {
+                const response = await fetch('/api/children', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert(data.message || 'Child registered successfully! Setup instructions were emailed.');
+                    e.target.reset();
+                    loadDashboard(); // Refresh counts and lists
+                    switchTab('children', document.querySelector('.nav-item:nth-child(2)'));
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (err) {
+                alert('Connection error.');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Complete Registration";
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+
+        loadDashboard();
+    </script>
+    <script src="/js/sidebar-toggle.js"></script>
+</body>
+</html>

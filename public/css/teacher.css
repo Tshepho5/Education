@@ -1,0 +1,43 @@
+:root {
+  --primary: #0f172a;
+  --secondary: #8b5cf6;
+  --bg: #f8fafc;
+  --sidebar: #1e293b;
+  --text-main: #334155;
+  --text-muted: #64748b;
+  --white: #ffffff;
+  --accent: #10b981;
+}
+
+body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+.sidebar { width: 260px; background: var(--sidebar); color: white; display: flex; flex-direction: column; }
+.sidebar-brand { padding: 2rem; font-size: 1.25rem; font-weight: bold; color: var(--secondary); text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.nav-list { flex: 1; padding: 1rem 0; list-style: none; margin: 0; }
+.nav-item { padding: 1rem 2rem; display: flex; align-items: center; color: #cbd5e1; cursor: pointer; transition: 0.2s; }
+.nav-item i { margin-right: 1rem; width: 20px; text-align: center; }
+.nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+.nav-item.active { background: var(--secondary); color: white; }
+
+.main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+.top-nav { background: var(--white); height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.top-nav h2 { margin: 0; font-size: 1.1rem; }
+
+.dashboard-body { padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+.section { display: none; }
+.section.active { display: block; animation: fadeIn 0.4s ease-out; }
+
+.card { background: var(--white); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
+.card-title { font-weight: 700; color: var(--primary); margin-bottom: 1rem; border-bottom: 2px solid var(--bg); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 10px; }
+
+.form-group { margin-bottom: 1.2rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+.form-control { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem; }
+.btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; }
+.btn-primary { background: var(--secondary); color: white; }
+.btn-info { background: #0ea5e9; color: white; }
+.btn-outline { border: 1px solid #e2e8f0; background: transparent; color: var(--text-main); }
+
+.badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

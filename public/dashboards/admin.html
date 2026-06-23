@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - FUSION_HIGH_APP</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="dashboard">
+  <button class="logout" onclick="logout()">Logout</button>
+  
+  <div class="dashboard-header">
+    <h1>Admin Dashboard</h1>
+    <div class="role-badge">ADMIN</div>
+  </div>
+
+  <div class="btn-grid">
+    <button class="btn btn-primary" onclick="openAnnouncementForm()">New Announcement</button>
+    <button class="btn btn-secondary" onclick="refreshAnnouncements()">Refresh Announcements</button>
+    <button class="btn btn-info">Manage Users (Coming Soon)</button>
+  </div>
+
+  <!-- Announcement Form (shared with teacher) -->
+  <div id="announcementForm" class="form-container" style="display: none;">
+    <h2>New Announcement</h2>
+    <form id="annForm">
+      <input type="text" id="annTitle" placeholder="Title" required>
+      <textarea id="annContent" placeholder="Content" required></textarea>
+      <select id="annTarget">
+        <option value="all">All</option>
+        <option value="parent">Parents</option>
+        <option value="learner">Learners</option>
+        <option value="teacher">Teachers</option>
+      </select>
+      <button type="submit">Post</button>
+      <button type="button" onclick="closeAnnForm()">Cancel</button>
+    </form>
+  </div>
+
+  <div id="announcementsSection">
+    <h3>Announcements</h3>
+    <div id="announcementsList">Loading...</div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    // Admin functions (similar to teacher)
+    function openAnnouncementForm() {
+      document.getElementById('announcementForm').style.display = 'block';
+    }
+
+    function closeAnnForm() {
+      document.getElementById('announcementForm').style.display = 'none';
+    }
+
+    document.getElementById('annForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        title: document.getElementById('annTitle').value,
+        content: document.getElementById('annContent').value,
+        role_target: document.getElementById('annTarget').value
+      };
+      try {
+        await createAnnouncement(data);
+        alert('Announcement posted!');
+        closeAnnForm();
+        refreshAnnouncements();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+// Admin functions (similar to teacher)
+
+    async function refreshAnnouncements() {
+      const anns = await getAnnouncements('admin');
+      displayAnnouncements(anns);
+    }
+
+    // Init
+    loadDashboardContent();
+    refreshAnnouncements();
+  </script>
+</body>
+</html>

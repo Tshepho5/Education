@@ -1,0 +1,64 @@
+:root {
+    --primary: #1e293b;
+    --secondary: #3b82f6;
+    --bg: #f8fafc;
+    --sidebar: #0f172a;
+    --text-main: #334155;
+    --text-muted: #64748b;
+    --white: #ffffff;
+    --success: #10b981;
+    --danger: #ef4444;
+}
+
+body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background: var(--bg); color: var(--text-main); display: flex; height: 100vh; }
+
+.sidebar { width: 280px; background: var(--sidebar); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar-brand { padding: 2rem; font-size: 1.5rem; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--secondary); }
+.nav-list { flex: 1; padding: 1.5rem 0; list-style: none; margin: 0; }
+.nav-item { padding: 0.75rem 2rem; display: flex; align-items: center; color: #94a3b8; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
+.nav-item i { margin-right: 1rem; font-size: 1.1rem; width: 24px; text-align: center; }
+.nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+.nav-item.active { background: rgba(59, 130, 246, 0.1); color: var(--secondary); border-left-color: var(--secondary); }
+
+.content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+.top-bar { background: var(--white); height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; border-bottom: 1px solid #e2e8f0; }
+.top-bar h1 { font-size: 1.25rem; margin: 0; font-weight: 600; color: var(--primary); }
+
+.user-menu { display: flex; align-items: center; gap: 1.5rem; }
+.btn-logout { background: #fee2e2; color: var(--danger); border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.btn-logout:hover { background: var(--danger); color: white; }
+
+.dashboard-body { padding: 2rem 2.5rem; }
+.section { display: none; }
+.section.active { display: block; animation: slideUp 0.3s ease-out; }
+
+.grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+.card-stat { background: var(--white); padding: 1.5rem; border-radius: 12px; display: flex; align-items: center; gap: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.icon-box { width: 56px; height: 56px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+.stat-val { font-size: 1.75rem; font-weight: 700; margin: 0; color: var(--primary); }
+.stat-label { font-size: 0.875rem; color: var(--text-muted); margin: 0; }
+
+.data-card { background: var(--white); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 2rem; }
+.card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9; background: #fafafa; font-weight: 600; color: var(--primary); }
+
+.table-responsive { width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { background: #f8fafc; padding: 1rem 1.5rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid #e2e8f0; }
+td { padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; }
+tr:hover { background: #fcfcfc; }
+
+.badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+.badge-success { background: #dcfce7; color: #15803d; }
+
+.announcement { padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9; }
+.announcement:last-child { border-bottom: none; }
+.ann-date { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+.ann-title { font-weight: 600; color: var(--primary); margin-bottom: 0.5rem; }
+.ann-content { font-size: 0.9rem; line-height: 1.5; color: var(--text-main); }
+
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.hidden { display: none; }
+
+.form-group { margin-bottom: 1.2rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+.form-control { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem; }

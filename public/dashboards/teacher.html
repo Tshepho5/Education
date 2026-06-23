@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Portal - Fusion High</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="/css/teacher.css">
+  <link rel="stylesheet" href="/css/responsive-sidebar.css">
+</head>
+<body>
+  <!-- Unified Mobile Navigation -->
+  <div class="hamburger">
+    <div></div>
+    <div></div>
+    <div></div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">FUSION TEACHER</div>
+    <ul class="nav-list">
+      <li class="nav-item active" onclick="switchTab('overview', this)"><i class="fas fa-th-large"></i> Overview</li>
+      <li class="nav-item" onclick="switchTab('my-subjects', this)"><i class="fas fa-book"></i> My Subjects</li>
+      <li class="nav-item" onclick="switchTab('performance', this)"><i class="fas fa-chart-bar"></i> Performance</li>
+      <li class="nav-item" onclick="switchTab('classes', this)"><i class="fas fa-users"></i> My Classes</li>
+      <li class="nav-item" onclick="switchTab('textbooks', this)"><i class="fas fa-book"></i> Textbooks</li>
+      <li class="nav-item" onclick="switchTab('announcements', this)"><i class="fas fa-bullhorn"></i> Announcements</li>
+      <li class="nav-item" onclick="switchTab('register-learner', this)"><i class="fas fa-user-plus"></i> Register Learner</li>
+      <li class="nav-item" onclick="switchTab('profile', this)"><i class="fas fa-user-circle"></i> My Profile</li>
+      <li class="nav-item" onclick="logout()" style="margin-top: auto; color: #f87171;"><i class="fas fa-sign-out-alt"></i> Logout</li>
+    </ul>
+  </aside>
+
+  <main class="main-content">
+    <nav class="top-nav">
+      <h2 id="tab-title">Teacher Dashboard</h2>
+      <div style="font-size: 0.9rem; color: var(--text-muted);">
+        <i class="fas fa-user-tie"></i> <span id="top-teacher-name">Loading...</span>
+      </div>
+    </nav>
+
+    <div class="dashboard-body">
+      <!-- Overview Section -->
+      <div id="overview" class="section active">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+          <div class="card">
+            <div class="card-title"><i class="fas fa-briefcase"></i> Current Workload</div>
+            <div id="workload-summary">Loading workload...</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="fas fa-clock"></i> Quick Actions</div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <button class="btn btn-primary" onclick="switchTab('my-subjects', document.querySelectorAll('.nav-item')[1])">AI Assignment Generator</button>
+              <button class="btn btn-info" onclick="switchTab('announcements', document.querySelectorAll('.nav-item')[4])">Post Announcement</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Subjects Section -->
+      <div id="my-subjects" class="section">
+        <div id="subjects-list-view">
+          <div class="card">
+            <div class="card-title"><i class="fas fa-book"></i> Your Assigned Subjects</div>
+            <div id="subjects-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;"></div>
+          </div>
+        </div>
+
+        <!-- AI Workspace inside Subject -->
+        <div id="subject-ai-workspace" style="display: none;">
+          <button class="btn btn-outline" onclick="backToSubjects()" style="margin-bottom: 1.5rem;">
+            <i class="fas fa-arrow-left"></i> Back to All Subjects
+          </button>
+          
+          <div class="card">
+            <div class="card-title">🤖 AI Assistant: <span id="active-subject-display"></span></div>
+            
+            <div id="genInputStep">
+              <input type="hidden" id="asSubject">
+              <input type="hidden" id="asGrade">
+              <div class="form-group">
+                <label>What topic should the assignment cover?</label>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" id="asTopic" class="form-control" placeholder="Enter topic manually or discover below">
+                    <button class="btn btn-info" onclick="fetchTextbookTopics()" id="btnDiscover">
+                        <i class="fas fa-search"></i> Discover Topics
+                    </button>
+                </div>
+                <div id="discoveredTopics" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <p style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">Topics found in textbook:</p>
+                    <div id="topicsList" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                </div>
+                <small style="color:var(--text-muted)">The AI uses your uploaded textbook to ensure accuracy.</small>
+              </div>
+              <button class="btn btn-primary" onclick="generateQuestions()">Generate Assignment</button>
+            </div>
+
+            <div id="genLoading" style="display: none; text-align: center; padding: 2rem;">
+              <i class="fas fa-brain fa-spin" style="font-size: 2rem; color: var(--secondary); margin-bottom: 1rem;"></i>
+              <p>AI is analyzing context and crafting your assignment...</p>
+            </div>
+
+            <div id="genReviewStep" style="display: none;">
+              <h3 style="margin-bottom: 1rem;">Review AI Generated Questions</h3>
+              <div id="questionsPreview" style="background: #f1f5f9; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; max-height: 400px; overflow-y: auto;"></div>
+              <div class="form-group">
+                <label>Assignment Title</label>
+                <input type="text" id="asTitle" class="form-control" placeholder="e.g. Week 4 Mathematics Quiz">
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="publishAssignment()">Approve & Send to Class</button>
+                <button class="btn btn-outline" onclick="backToGen()">Regenerate / Edit Topic</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Classes Section -->
+      <div id="classes" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-list"></i> Select Class</div>
+          <div id="class-selector-container" style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
+            <select id="selSubject" class="form-control" style="width: auto;" title="Select subject" aria-label="Select subject"></select>
+            <select id="selGrade" class="form-control" style="width: auto;" title="Select grade" aria-label="Select grade"></select>
+            <select id="selClassroom" class="form-control" style="width: auto;" title="Select classroom" aria-label="Select classroom"></select>
+            <button class="btn btn-primary" onclick="loadClassList()">View Class</button>
+          </div>
+          <div id="classListTable">
+            <p style="color: var(--text-muted);">Select a subject and grade above to view students.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Textbooks Section -->
+      <div id="textbooks" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-file-upload"></i> Upload Subject Textbook</div>
+          <form id="textbookForm" onsubmit="uploadTextbook(event)">
+            <div class="form-group">
+              <label>Select Subject</label>
+              <select id="tbSubject" class="form-control" required title="Select textbook subject" aria-label="Select textbook subject"></select>
+            </div>
+            <div class="form-group">
+              <label>Grade Level</label>
+              <select id="tbGrade" class="form-control" required title="Select textbook grade" aria-label="Select textbook grade"></select>
+            </div>
+            <div class="form-group">
+              <label>PDF Textbook File</label>
+              <input type="file" id="tbFile" class="form-control" accept="application/pdf" required title="Select PDF textbook file" aria-label="Select PDF textbook file">
+            </div>
+            <button type="submit" class="btn btn-primary">Upload & Index Content</button>
+          </form>
+        </div>
+
+        <div class="card" style="margin-top: 1.5rem;">
+          <div class="card-title"><i class="fas fa-layer-group"></i> My Uploaded Textbooks</div>
+          <div id="myTextbooksList">Loading textbooks...</div>
+        </div>
+      </div>
+
+      <!-- Performance Section -->
+      <div id="performance" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-chart-line"></i> Class Performance Analytics</div>
+          <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
+            <select id="perfSubject" class="form-control" style="width: auto;" title="Select subject for performance analytics" onchange="loadPerformanceOverview()"></select>
+          </div>
+          <div style="height: 300px;"><canvas id="classPerfChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-trophy"></i> Top Performers</div>
+          <div id="teacherLeaderboard"></div>
+        </div>
+      </div>
+
+      <!-- Announcements Section -->
+      <div id="announcements" class="section">
+        <div class="card">
+          <div class="card-title">New Announcement</div>
+          <form id="annForm">
+            <div class="form-group">
+              <label>Title</label>
+              <input type="text" id="annTitle" class="form-control" required title="Enter announcement title">
+            </div>
+            <div class="form-group">
+              <label for="annContent">Content</label>
+              <textarea id="annContent" class="form-control" rows="4" required title="Enter announcement content" placeholder="Write the announcement content here" aria-label="Announcement content"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Target Audience</label>
+              <select id="annTarget" class="form-control" title="Select target audience for announcement" aria-label="Announcement target audience">
+                <option value="all">Everyone</option>
+                <option value="parent">Parents Only</option>
+                <option value="learner">Learners Only</option>
+              </select>
+            </div>
+            <div id="annFilters" style="display:none; gap: 10px; margin-bottom: 1rem;">
+                <select id="annGrade" class="form-control" style="width: auto;"></select>
+                <select id="annStream" class="form-control" style="width: auto;">
+                    <option value="">All Streams</option>
+                    <option value="Science">Science</option>
+                    <option value="Commerce">Commerce</option>
+                    <option value="Tourism">Tourism</option>
+                </select>
+                <select id="annSubject" class="form-control" style="width: auto;"></select>
+            </div>
+            <button type="submit" class="btn btn-primary">Post Announcement</button>
+          </form>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent Posts</div>
+          <div id="announcementsList">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Register Learner Section -->
+      <div id="register-learner" class="section"></div>
+
+      <!-- Profile Section -->
+      <div id="profile" class="section">
+        <div class="card">
+          <div class="card-title">Profile Settings</div>
+          <form id="updateProfileForm" onsubmit="updateProfile(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+              <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="prof-name" class="form-control" required title="Full Name" placeholder="Full Name" aria-label="Full Name">
+              </div>
+              <div class="form-group">
+                <label>Surname</label>
+                <input type="text" id="prof-surname" class="form-control" required title="Surname" placeholder="Surname">
+              </div>
+              <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="prof-email" class="form-control" required title="Email Address" placeholder="Email Address" aria-label="Email Address">
+                <small style="color:var(--text-muted)">Changing your email will require verification.</small>
+              </div>
+              <div class="form-group">
+                <label for="prof-phone">Phone Number</label>
+                <input type="text" id="prof-phone" class="form-control" title="Phone Number" placeholder="Phone Number" aria-label="Phone Number">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Physical Address</label>
+              <textarea id="prof-address" class="form-control" rows="3" title="Physical Address" placeholder="Physical Address" aria-label="Physical Address"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/sidebar-toggle.js"></script>
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/';
+
+    async function switchTab(tabId, el) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      
+      const targetSection = document.getElementById(tabId);
+      targetSection.classList.add('active');
+      el.classList.add('active');
+      document.getElementById('tab-title').innerText = el.innerText;
+
+      // Lazy load the registration form for teachers
+      if (tabId === 'register-learner' && (!targetSection.innerHTML || targetSection.innerHTML.trim() === "")) {
+          try {
+              const resp = await fetch('/dashboards/RegisterLearnerForm.html');
+              targetSection.innerHTML = await resp.text();
+          } catch (e) { console.error("Failed to load form", e); }
+      }
+    }
+
+    const CAPS_SUBJECTS = {
+        'Science': ['Home Language', 'English FAL', 'Mathematics', 'Physical Sciences', 'Life Sciences', 'Geography', 'Life Orientation'],
+        'Commerce': ['Home Language', 'English FAL', 'Mathematics', 'Accounting', 'Business Studies', 'Economics', 'Life Orientation'],
+        'Tourism': ['Home Language', 'English FAL', 'Mathematical Literacy', 'Tourism', 'Business Studies', 'Geography', 'Life Orientation'],
+        'General': ['Home Language', 'English FAL', 'Mathematics', 'Natural Sciences', 'Social Sciences', 'Technology', 'EMS', 'Life Orientation', 'Creative Arts']
+    };
+
+    function toggleStream() {
+        const grade = parseInt(document.getElementById('childGrade').value);
+        const streamGroup = document.getElementById('streamGroup');
+        const streamSelect = document.getElementById('childStream');
+        
+        if (grade >= 10) {
+            streamGroup.style.display = 'block';
+            streamSelect.required = true;
+        } else {
+            streamGroup.style.display = 'none';
+            streamSelect.required = false;
+            streamSelect.value = "";
+            updateSubjectPreview();
+        }
+    }
+
+    function updateSubjectPreview() {
+        const grade = parseInt(document.getElementById('childGrade').value);
+        const stream = document.getElementById('childStream').value;
+        const list = document.getElementById('subjectList');
+        const preview = document.getElementById('subjectPreview');
+        
+        const subjects = (grade >= 10 && stream) ? CAPS_SUBJECTS[stream] : (grade < 10 ? CAPS_SUBJECTS['General'] : []);
+        preview.style.display = subjects.length ? 'block' : 'none';
+        list.innerHTML = subjects.map(s => `<li>${s}</li>`).join('');
+    }
+
+    window.extractDOB = function(idVal, targetId) {
+        if (!idVal || idVal.length < 6) return;
+        
+        const yy = idVal.substring(0, 2);
+        const mm = idVal.substring(2, 4);
+        const dd = idVal.substring(4, 6);
+        
+        const month = parseInt(mm);
+        const day = parseInt(dd);
+        if (month < 1 || month > 12 || day < 1 || day > 31) return;
+
+        const century = (parseInt(yy) <= (new Date().getFullYear() % 100)) ? '20' : '19';
+        document.getElementById(targetId).value = `${dd}/${mm}/${century}${yy}`;
+    };
+
+    async function fetchData(url) {
+      const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (resp.status === 401 || resp.status === 403) logout();
+      return resp.json();
+    }
+
+    // Load Teacher Profile & Workload
+    async function loadTeacherData() {
+      const profile = await fetchData('/api/profile');
+      document.getElementById('top-teacher-name').innerText = profile.full_name + ' ' + profile.surname;
+      
+      // Fill Profile Form
+      document.getElementById('prof-name').value = profile.full_name || '';
+      document.getElementById('prof-surname').value = profile.surname || '';
+      document.getElementById('prof-email').value = profile.email;
+      document.getElementById('prof-phone').value = profile.phone || '';
+      document.getElementById('prof-address').value = profile.physical_address || '';
+
+      const workload = await fetchData('/api/teacher/workload');
+      const workloadDiv = document.getElementById('workload-summary');
+      const subjectsGrid = document.getElementById('subjects-grid');
+      
+      // We iterate based on subject_codes as it uniquely represents each assigned class instance
+      const assignments = workload.subject_codes || [];
+
+      if (assignments.length) {
+        workloadDiv.innerHTML = assignments.map((code, i) => `
+          <div style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
+            <i class="fas fa-chalkboard-teacher" style="color:var(--secondary)"></i> 
+            <strong>${workload.subjects[i] || workload.subjects[0] || 'Subject'} (${code})</strong> — Grade ${workload.grades_taught[i] || 'N/A'} 
+            <span class="badge" style="background:var(--bg); color:var(--text-muted)">${workload.classes_taught[i] || ''}</span>
+          </div>
+        `).join('');
+
+        // Populate My Subjects Workspace
+        subjectsGrid.innerHTML = assignments.map((code, i) => `
+          <div class="card" style="border-top: 4px solid var(--secondary); margin-bottom:0;">
+            <h3 style="margin-top:0;">${workload.subjects[i] || workload.subjects[0] || 'Subject'}</h3>
+            <p style="color:var(--text-muted); font-size:0.9rem;">
+                <strong>Code:</strong> ${code}<br>
+                <strong>Grade:</strong> ${workload.grades_taught[i] || 'N/A'}<br>
+                <strong>Class:</strong> ${workload.classes_taught[i] || 'N/A'}
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 1rem;">
+              <button class="btn btn-primary" onclick="startSubjectAssignment('${workload.subjects[i] || workload.subjects[0]}', ${workload.grades_taught[i]})">
+                <i class="fas fa-magic"></i> Generate Assignment
+              </button>
+            </div>
+          </div>
+        `).join('');
+        // Populate Class Selector with unique assigned values
+        const subSel = document.getElementById('selSubject');
+        const grdSel = document.getElementById('selGrade');
+        const clsSel = document.getElementById('selClassroom');
+
+        // Using Set to ensure unique values in case of duplicates in DB arrays
+        subSel.innerHTML = [...new Set(workload.subjects)].map(s => `<option value="${s}">${s}</option>`).join('');
+        grdSel.innerHTML = [...new Set(workload.grades_taught)].sort((a,b) => a-b).map(g => `<option value="${g}">Grade ${g}</option>`).join('');
+        clsSel.innerHTML = workload.classes_taught.length > 0 
+          ? [...new Set(workload.classes_taught)].map(c => `<option value="${c}">${c}</option>`).join('')
+          : '<option value="">All Rooms</option>';
+
+        // Also populate targeting selects in announcement form
+        document.getElementById('annGrade').innerHTML = grdSel.innerHTML;
+        document.getElementById('annSubject').innerHTML = '<option value="">All Subjects</option>' + subSel.innerHTML;
+        
+        document.getElementById('perfSubject').innerHTML = subSel.innerHTML;
+        loadPerformanceOverview();
+
+        // Populate Textbook selects
+        document.getElementById('tbSubject').innerHTML = subSel.innerHTML;
+        document.getElementById('tbGrade').innerHTML = grdSel.innerHTML;
+      } else {
+        workloadDiv.innerHTML = '<p>No subjects currently assigned.</p>';
+        subjectsGrid.innerHTML = '<p>No subjects assigned to your profile yet.</p>';
+      }
+      
+      loadMyTextbooks(); // Load list regardless of workload status
+    }
+
+    async function loadMyTextbooks() {
+      try {
+        const textbooks = await fetchData('/api/teacher/my-textbooks');
+        const container = document.getElementById('myTextbooksList');
+        
+        if (!textbooks || textbooks.length === 0) {
+          container.innerHTML = '<p style="color:var(--text-muted)">You haven\'t uploaded any textbooks yet.</p>';
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="table-responsive">
+            <table style="width:100%; border-collapse: collapse;">
+              <thead>
+                <tr style="text-align: left; background: var(--bg);">
+                  <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">Subject</th>
+                  <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">Grade</th>
+                  <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">Upload Date</th>
+                  <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${textbooks.map(t => {
+                  // Ensure path uses forward slashes for the URL
+                  const urlPath = t.file_path ? '/' + t.file_path.replace(/\\/g, '/') : '#';
+                  return `
+                  <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-weight: 500;">${t.subject}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">Grade ${t.grade}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: var(--text-muted);">${new Date(t.upload_date).toLocaleDateString()}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+                      <a href="${urlPath}" target="_blank" class="btn btn-info" style="padding: 4px 10px; font-size: 0.8rem; text-decoration: none;">
+                        <i class="fas fa-eye"></i> View PDF
+                      </a>
+                    </td>
+                  </tr>
+                `;}).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } catch (err) { console.error("Failed to load textbooks", err); }
+    }
+
+    // Navigation helper to jump into AI Generator from a specific subject card
+    function startSubjectAssignment(subject, grade) {
+      document.getElementById('subjects-list-view').style.display = 'none';
+      document.getElementById('subject-ai-workspace').style.display = 'block';
+      
+      document.getElementById('active-subject-display').innerText = `${subject} (Grade ${grade})`;
+      document.getElementById('asSubject').value = subject;
+      document.getElementById('asGrade').value = grade;
+
+      // Automatically discover topics when the subject workspace opens
+      fetchTextbookTopics();
+
+      backToGen(); // Reset AI form to input step
+    }
+
+    let classChart;
+    async function loadPerformanceOverview() {
+        const subject = document.getElementById('perfSubject').value;
+        if (!subject) return;
+
+        // Fetch Leaderboard for this subject
+        const board = await fetchData(`/api/ai/leaderboard?subject=${encodeURIComponent(subject)}`);
+        const lb = document.getElementById('teacherLeaderboard');
+        lb.innerHTML = board.length ? `
+            <table style="width:100%; border-collapse:collapse;">
+                ${board.map((u, i) => `<tr style="border-bottom:1px solid #eee; padding:8px 0;">
+                    <td><strong>#${i+1}</strong></td>
+                    <td>Learner ${u.rank_id}</td>
+                    <td style="text-align:right"><span class="badge" style="background:var(--accent); color:white;">${u.score}%</span></td>
+                </tr>`).join('')}
+            </table>
+        ` : '<p>No assessment data yet.</p>';
+
+        // Draw a simple bar chart of the top scores
+        const ctx = document.getElementById('classPerfChart').getContext('2d');
+        if (classChart) classChart.destroy();
+        classChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: board.map(u => u.rank_id),
+                datasets: [{
+                    label: 'Top Scores (%)',
+                    data: board.map(u => u.score),
+                    backgroundColor: '#8b5cf6'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { min: 0, max: 100 } }
+            }
+        });
+    }
+
+    async function fetchTextbookTopics() {
+        const subject = document.getElementById('asSubject').value;
+        const grade = document.getElementById('asGrade').value;
+        const typedTopic = document.getElementById('asTopic').value;
+        const btn = document.getElementById('btnDiscover');
+        const list = document.getElementById('topicsList');
+        const box = document.getElementById('discoveredTopics');
+
+        btn.disabled = true;
+        btn.innerHTML = typedTopic ? '<i class="fas fa-spinner fa-spin"></i> Searching Topic...' : '<i class="fas fa-spinner fa-spin"></i> Indexing Chapters...';
+
+        try {
+            const data = await fetchData(`/api/teacher/textbook-topics?subject=${encodeURIComponent(subject)}&grade=${grade}&topic=${encodeURIComponent(typedTopic)}`);
+            if (data.error) throw new Error(data.error);
+
+            box.style.display = 'block';
+            list.innerHTML = data.topics.length ? data.topics.map(topic => `
+                <button class="badge" style="cursor:pointer; border:1px solid var(--secondary); background:white; color:var(--secondary); padding: 5px 12px;" 
+                    onclick="selectDiscoveredTopic('${topic.replace(/'/g, "\\'")}')">
+                    ${topic}
+                </button>`).join('') : '<p style="font-size: 0.8rem; color: var(--text-muted);">No specific topics found. Try typing a broader term.</p>';
+        } catch (err) {
+            alert(err.message || "Could not find a textbook. Please upload one first.");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-search"></i> Discover Topics';
+        }
+    }
+
+    function selectDiscoveredTopic(topic) {
+        document.getElementById('asTopic').value = topic;
+    }
+
+    function backToSubjects() {
+      document.getElementById('subjects-list-view').style.display = 'block';
+      document.getElementById('subject-ai-workspace').style.display = 'none';
+    }
+
+    async function loadClassList() {
+      const subject = document.getElementById('selSubject').value;
+      const grade = document.getElementById('selGrade').value;
+      const students = await fetchData(`/api/teacher/classlist?subject=${subject}&grade=${grade}`);
+      
+      const container = document.getElementById('classListTable');
+      if (students.length === 0) {
+        container.innerHTML = '<p>No students found for this class.</p>';
+        return;
+      }
+
+      container.innerHTML = `
+        <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+          <thead>
+            <tr style="text-align: left; background: var(--bg);">
+              <th style="padding: 12px;">Learner Number</th>
+              <th style="padding: 12px;">Full Name</th>
+              <th style="padding: 12px;">Stream</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${students.map(s => `
+              <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${s.learner_number}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${s.learner_name} ${s.learner_surname}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${s.stream}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // AI Generation Functions
+    function backToGen() {
+      document.getElementById('genInputStep').style.display = 'block';
+      document.getElementById('genReviewStep').style.display = 'none';
+      document.getElementById('genLoading').style.display = 'none';
+    }
+
+    let currentQuestions = [];
+    async function generateQuestions() {
+      const subject = document.getElementById('asSubject').value;
+      const topic = document.getElementById('asTopic').value;
+      const grade = document.getElementById('asGrade').value;
+
+      if(!subject || !topic || !grade) return alert('Please fill in all fields');
+
+      document.getElementById('genInputStep').style.display = 'none';
+      document.getElementById('genLoading').style.display = 'block';
+
+      try {
+        const response = await fetch('/api/ai/generate-assignment-questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ subject, topic, grade })
+        });
+        const data = await response.json();
+        if(data.error) throw new Error(data.error);
+
+        currentQuestions = data.questions;
+        if (!Array.isArray(currentQuestions) || currentQuestions.length === 0) {
+            throw new Error("AI returned data in an invalid format. Please try generating again.");
+        }
+
+        const container = document.getElementById('questionsPreview');
+        container.innerHTML = currentQuestions.map((q, i) => `
+          <div style="margin-bottom: 1rem; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">
+            <p><strong>${i+1}. ${q.question}</strong></p>
+            <p style="color: var(--accent); font-size: 0.9rem;"><strong>Correct Answer:</strong> ${q.answer || 'N/A'}</p>
+            <small style="color:var(--text-muted)">Type: ${q.type}</small>
+          </div>
+        `).join('');
+
+        document.getElementById('genLoading').style.display = 'none';
+        document.getElementById('genReviewStep').style.display = 'block';
+      } catch (err) { alert(err.message); backToGen(); }
+    }
+
+    function toggleAnnFilters() {
+      const target = document.getElementById('annTarget').value;
+      document.getElementById('annFilters').style.display = (target === 'learner' || target === 'parent') ? 'flex' : 'none';
+    }
+
+    async function publishAssignment() {
+      const title = document.getElementById('asTitle').value || 'New AI Assignment';
+      const payload = {
+        title,
+        subject: document.getElementById('asSubject').value,
+        grade: document.getElementById('asGrade').value,
+        questions: currentQuestions
+      };
+
+      const resp = await fetch('/api/teacher/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      alert(data.message || data.error);
+      backToGen();
+    }
+
+    async function uploadTextbook(e) {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append('subject', document.getElementById('tbSubject').value);
+      formData.append('grade', document.getElementById('tbGrade').value);
+      formData.append('textbook', document.getElementById('tbFile').files[0]);
+
+      const btn = e.target.querySelector('button');
+      btn.disabled = true;
+      btn.innerText = "Processing...";
+
+      try {
+        const resp = await fetch('/api/teacher/upload-textbook', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          alert('Textbook uploaded successfully! AI indexing complete.');
+          e.target.reset();
+          loadMyTextbooks();
+        } else { alert(data.error); }
+      } catch (err) { alert('Upload failed.'); } finally {
+        btn.disabled = false;
+        btn.innerText = "Upload & Index Content";
+      }
+    }
+
+    // Profile Logic
+    async function updateProfile(e) {
+      e.preventDefault();
+      const payload = {
+        full_name: document.getElementById('prof-name').value,
+        surname: document.getElementById('prof-surname').value,
+        email: document.getElementById('prof-email').value,
+        phone: document.getElementById('prof-phone').value,
+        physical_address: document.getElementById('prof-address').value
+      };
+      
+      const resp = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (resp.ok) {
+        alert('Profile updated successfully! Check your email if you changed your address.');
+        loadTeacherData();
+      } else {
+        const error = await resp.json();
+        alert('Error: ' + error.error);
+      }
+    }
+
+    // Announcements Logic
+    document.getElementById('annForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const target = document.getElementById('annTarget').value;
+      const payload = {
+        title: document.getElementById('annTitle').value,
+        content: document.getElementById('annContent').value,
+        role_target: target,
+        grade_target: (target === 'learner' || target === 'parent') ? document.getElementById('annGrade').value : null,
+        stream_target: (target === 'learner' || target === 'parent') ? document.getElementById('annStream').value : null,
+        subject_target: (target === 'learner' || target === 'parent') ? document.getElementById('annSubject').value : null
+      };
+
+      const resp = await fetch('/api/announcements', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if(resp.ok) { alert('Posted!'); refreshAnnouncements(); }
+    });
+
+    async function registerChild(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+
+        const grade = parseInt(document.getElementById('childGrade').value);
+        const stream = document.getElementById('childStream').value;
+        
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+
+        const payload = {
+            full_name: document.getElementById('childName').value,
+            surname: document.getElementById('childSurname').value,
+            id_number: document.getElementById('childID').value,
+            grade: grade,
+            stream: grade >= 10 ? stream : 'General',
+            subjects: (grade >= 10 && stream) ? CAPS_SUBJECTS[stream] : CAPS_SUBJECTS['General'],
+            dob: document.getElementById('childDOB').value,
+            phone: document.getElementById('childPhone').value,
+            physical_address: document.getElementById('childAddress').value,
+            country: document.getElementById('childCountry').value,
+            race: document.getElementById('childRace').value
+        };
+
+        try {
+            const response = await fetch('/api/children', {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message || 'Learner registered successfully! Setup instructions were emailed.');
+                e.target.reset();
+                loadTeacherData(); // Refresh workload data
+                switchTab('overview', document.querySelectorAll('.nav-item')[0]);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (err) {
+            alert('Connection error.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Complete Registration";
+        }
+    }
+
+    async function refreshAnnouncements() {
+      const resp = await fetch('/api/announcements', { headers: { 'Authorization': `Bearer ${token}` } });
+      const anns = await resp.json();
+      document.getElementById('announcementsList').innerHTML = anns.map(a => `
+        <div style="padding: 1rem; border-bottom: 1px solid #e2e8f0;">
+          <div style="font-weight: bold;">${a.title}</div>
+          <div style="font-size: 0.9rem; margin-top: 5px;">${a.content}</div>
+          <small style="color:var(--text-muted)">${new Date(a.created_at).toLocaleDateString()}</small>
+        </div>
+      `).join('');
+    }
+
+    function logout() { localStorage.clear(); window.location.href = '/'; }
+
+    // Init
+    loadTeacherData();
+    refreshAnnouncements();
+  </script>
+</body>
+</html>

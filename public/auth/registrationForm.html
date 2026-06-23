@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FUSION_HIGH_APP - Register</title>
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🌟 FUSION_HIGH_APP</h1>
+      <p>The Future SMS</p>
+    </header>
+
+    <!-- Register Form -->
+     <div id="register-form" class="form-container active">
+      <h2>Parent Registration</h2>
+            <form id="registerForm">
+
+          <div id="parentFields" class="parent-fields">
+
+          <label>Surname:</label>
+          <input type="text" id="surname" placeholder="Surname" required>
+
+          <label>Full Name:</label>
+          <input type="text" id="fullName" placeholder="Full Name" required>
+
+          <label>ID Number:</label>
+          <input type="text" id="idNumber" placeholder="ID Number" required oninput="extractDOB(this.value, 'dob')">
+
+          <label>Date of Birth (DD/MM/YYYY):</label>
+          <input type="text" id="dob" placeholder="DD/MM/YYYY" required>
+
+          <label>Phone Number:</label>
+          <input type="tel" id="phone" placeholder="Phone Number" required>
+
+          <label>Email:</label>
+        <input type="email" id="regEmail" placeholder="Email" required>
+
+        <div class="password-wrapper">
+        <label>Password:</label>
+        <input type="password" id="regPassword" placeholder="Password" required>
+        <span class="eye" id="toggleRegPassword">👁</span>
+        </div>
+
+        <div class="password-wrapper">
+          <label>Confirm Password:</label>
+          <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+          <span class="eye" id="toggleConfirmPassword">👁</span>
+        </div>
+
+          <label>Physical Address:</label>
+          <input type="text" id="physicalAddress" placeholder="Physical Address" required>
+
+          <label for="country">Country:</label>
+          <select id="country" title="Country" required>
+            <option value="">Select Country</option>
+            <option value="South Africa" selected>South Africa</option>
+          </select>
+
+          <label>Race:</label>
+          <input type="text" id="race" placeholder="Race" required>
+
+          <label for="parentType">Parent Type:</label>
+          <select id="parentType" title="Parent Type" required>
+            <option value="">Mother, Father or Guardian</option>
+            <option value="mother">Mother</option>
+            <option value="father">Father</option>
+            <option value="guardian">Guardian</option>
+          </select>
+        </div>
+
+
+        
+        <button type="submit">Register</button>
+      </form>
+      <p>Have an account? <a href="/">Login here</a></p>
+      <div id="regError" class="error"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const registerForm = document.getElementById('registerForm');
+      const regError = document.getElementById('regError');
+
+      window.extractDOB = function(idVal, targetId) {
+        if (!idVal || idVal.length < 6) return;
+        const yy = idVal.substring(0, 2);
+        const mm = idVal.substring(2, 4);
+        const dd = idVal.substring(4, 6);
+        const month = parseInt(mm);
+        const day = parseInt(dd);
+        if (month < 1 || month > 12 || day < 1 || day > 31) return;
+        
+        const century = (parseInt(yy) <= (new Date().getFullYear() % 100)) ? '20' : '19';
+        document.getElementById(targetId).value = `${dd}/${mm}/${century}${yy}`;
+      };
+
+      const parentFields = document.getElementById('parentFields');
+      parentFields.classList.remove('hidden');
+
+      // Password eye toggles
+      const setupToggle = (toggleId, inputId) => {
+        const toggle = document.getElementById(toggleId);
+        const input = document.getElementById(inputId);
+        if (toggle && input) {
+          toggle.addEventListener('click', () => {
+            input.type = input.type === 'password' ? 'text' : 'password';
+            toggle.textContent = input.type === 'password' ? '👁' : '🙈';
+          });
+        }
+      };
+
+      setupToggle('toggleRegPassword', 'regPassword');
+      setupToggle('toggleConfirmPassword', 'confirmPassword');
+
+      // Register submit
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearError(regError);
+
+        const password = document.getElementById('regPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        if (password !== confirmPassword) {
+          showError(regError, 'Passwords do not match');
+          return;
+        }
+
+        const userData = {
+          // username generated from full_name + surname or email prefix if needed; backend handles
+          email: document.getElementById('regEmail').value,
+          password,
+          confirm_password: confirmPassword,
+          role: 'parent'
+        };
+
+        const dob = document.getElementById('dob').value;
+        if (!dob.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+          showError(regError, 'DOB format: DD/MM/YYYY');
+          return;
+        }
+        userData.full_name = document.getElementById('fullName').value;
+        userData.surname = document.getElementById('surname').value;
+        userData.id_number = document.getElementById('idNumber').value;
+        userData.dob = dob;
+        userData.phone = document.getElementById('phone').value;
+        userData.physical_address = document.getElementById('physicalAddress').value;
+        userData.country = document.getElementById('country').value;
+        userData.race = document.getElementById('race').value;
+        userData.parent_type = document.getElementById('parentType').value;
+
+        if (!userData.full_name || !userData.surname || !userData.id_number || !userData.dob || !userData.phone ||
+            !userData.physical_address || !userData.country || !userData.race || !userData.parent_type) {
+          showError(regError, 'All parent fields required');
+          return;
+        }
+
+        try {
+          registerForm.querySelector('button').textContent = 'Registering...';
+          const response = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Registration failed');
+          }
+
+          const data = await response.json();
+          alert('Registration successful! Please login to continue.');
+          window.location.href = '/';
+        } catch (error) {
+          showError(regError, error.message);
+        } finally {
+          registerForm.querySelector('button').textContent = 'Register';
+        }
+      });
+
+      function clearError(errorEl) {
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
+      }
+
+      function showError(errorEl, message) {
+        errorEl.textContent = message;
+        errorEl.classList.add('show');
+      }
+    });
+  </script>
+</body>
+</html>

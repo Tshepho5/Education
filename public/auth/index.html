@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FUSION_HIGH_APP - School Management System</title>
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🌟 FUSION_HIGH_APP</h1>
+      <p>The Future SMS</p>
+    </header>
+
+    <!-- Login Form -->
+    <div id="login-form" class="form-container active">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <input type="text" id="loginEmail" placeholder="Email or Learner Number" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button type="submit">Login</button>
+      </form>
+      <a href="/forgot-password">Forgot Password?</a>
+
+      <p>Don't have an account? <a href="/register">Register here</a></p>
+      <div id="loginError" class="error"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const loginError = document.getElementById('loginError');
+
+    function normalizeDashboardRole(role) {
+      const normalized = (role || '').toLowerCase();
+      const roleMap = {
+        administrator: 'admin',
+        principal: 'admin',
+        vice_principal: 'admin',
+        'vice-principal': 'admin'
+      };
+      return roleMap[normalized] || normalized;
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loginError.textContent = ''; // Clear previous errors
+
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // 1. Store the security token and role
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('userRole', data.role);
+          
+          // 2. Redirect the user using the clean dashboard route
+          window.location.href = `/dashboard/${normalizeDashboardRole(data.role)}`;
+        } else {
+          loginError.textContent = data.error || 'Invalid email or password';
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        loginError.textContent = 'Unable to connect to the server. Please try again later.';
+      }
+    });
+  </script>
+</body>
+</html>

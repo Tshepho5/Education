@@ -1,0 +1,31 @@
+:root {
+  --primary: #0f172a;
+  --secondary: #ef4444; 
+  --bg: #f8fafc;
+  --text-main: #334155;
+  --text-muted: #64748b;
+  --white: #ffffff;
+}
+
+body.dashboard { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: var(--text-main); padding: 2rem; }
+
+.dashboard-header { margin-bottom: 2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
+.dashboard-header h1 { margin: 0; font-size: 1.5rem; }
+
+.role-badge { background: var(--secondary); color: white; padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; }
+
+.logout { position: absolute; top: 2rem; right: 2rem; background: #fee2e2; color: var(--secondary); border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+
+.btn-grid { display: flex; gap: 1rem; margin-bottom: 2rem; }
+.btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
+.btn-primary { background: #3b82f6; color: white; }
+.btn-secondary { background: #64748b; color: white; }
+.btn-info { background: #0ea5e9; color: white; }
+
+.form-container { background: var(--white); padding: 2rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+.form-container h2 { margin-top: 0; font-size: 1.25rem; margin-bottom: 1.5rem; }
+.form-container input, .form-container textarea, .form-container select { width: 100%; padding: 12px; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; }
+
+#announcementsSection { background: var(--white); padding: 2rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+#announcementsList { margin-top: 1rem; }
+.announcement { padding: 1rem; border-bottom: 1px solid #e2e8f0; }

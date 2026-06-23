@@ -1,0 +1,67 @@
+<div class="data-card" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-header"><i class="fas fa-user-plus"></i> New Learner Admission Form</div>
+    <form id="childRegForm" onsubmit="registerChild(event)" style="padding: 2rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="form-group">
+                <label for="childName">First Name(s)</label>
+                <input type="text" id="childName" class="form-control" placeholder="First Name(s)" required>
+            </div>
+            <div class="form-group">
+                <label for="childSurname">Surname</label>
+                <input type="text" id="childSurname" class="form-control" placeholder="Surname" required>
+            </div>
+            <div class="form-group">
+                <label for="childID">ID / Passport Number</label>
+                <input type="text" id="childID" class="form-control" placeholder="ID / Passport Number" required oninput="extractDOB(this.value, 'childDOB')">
+            </div>
+            <div class="form-group">
+                <label for="childDOB">Date of Birth (DD/MM/YYYY)</label>
+                <input type="text" id="childDOB" class="form-control" placeholder="DD/MM/YYYY" required>
+            </div>
+            <div class="form-group">
+                <label for="childGrade">Grade Level</label>
+                <select id="childGrade" class="form-control" onchange="toggleStream()" required>
+                    <option value="">Select Grade</option>
+                    <option value="8">Grade 8</option>
+                    <option value="9">Grade 9</option>
+                    <option value="10">Grade 10</option>
+                    <option value="11">Grade 11</option>
+                    <option value="12">Grade 12</option>
+                </select>
+            </div>
+            <div class="form-group" id="streamGroup" style="display:none">
+                <label>Academic Stream</label>
+                <select id="childStream" class="form-control" onchange="updateSubjectPreview()">
+                    <option value="">Select Stream</option>
+                    <option value="Science">Science</option>
+                    <option value="Commerce">Commerce</option>
+                    <option value="Tourism">Tourism</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="childPhone">Phone Number (Optional)</label>
+                <input type="tel" id="childPhone" class="form-control" placeholder="e.g. +27 82 555 1234" title="Learner or guardian phone number (optional)">
+            </div>
+            <div class="form-group">
+                <label for="childCountry">Country of Origin</label>
+                <input type="text" id="childCountry" class="form-control" value="South Africa" placeholder="Country of Origin" title="Country of Origin">
+            </div>
+            <div class="form-group">
+                <label for="childRace">Race</label>
+                <input type="text" id="childRace" class="form-control" placeholder="e.g. African, Coloured, Indian, White" title="Learner race">
+            </div>
+        </div>
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="childAddress">Physical Address (Leave blank if same as parent)</label>
+            <textarea id="childAddress" class="form-control" rows="2" placeholder="Physical Address" title="Physical Address (Leave blank if same as parent)"></textarea>
+        </div>
+        <div id="subjectPreview" style="display:none; margin: 1.5rem 0; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+            <p style="font-weight:600; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Enrolled Subjects (CAPS):</p>
+            <ul id="subjectList" style="font-size: 0.9rem; column-count: 2; padding-left: 1.2rem;"></ul>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 1rem;">
+            A learner number and one-time setup code will be emailed to the registrar. The learner will choose their own password during setup.
+        </p>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Complete Registration</button>
+    </form>
+</div>

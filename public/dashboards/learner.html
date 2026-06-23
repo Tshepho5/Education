@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learner Portal - Fusion High</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/css/learner.css">
+    <link rel="stylesheet" href="/css/responsive-sidebar.css">
+</head>
+<body>
+    <!-- Hamburger Menu for Mobile -->
+    <div class="hamburger">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">FUSION LEARNER</div>
+        <ul class="nav-list">
+            <li class="nav-item active" onclick="switchTab('home', this)"><i class="fas fa-home"></i> Home</li>
+            <li class="nav-item" onclick="switchTab('subjects', this)"><i class="fas fa-book-open"></i> My Subjects</li>
+            <li class="nav-item" onclick="switchTab('assessments', this)"><i class="fas fa-clipboard-check"></i> Assessments</li>
+            <li class="nav-item" onclick="switchTab('grades', this)"><i class="fas fa-chart-line"></i> Performance</li>
+            <li class="nav-item" onclick="switchTab('announcements', this)"><i class="fas fa-bullhorn"></i> Announcements</li>
+            <li class="nav-item" onclick="switchTab('profile', this)"><i class="fas fa-user-circle"></i> My Profile</li>
+            <li class="nav-item" onclick="logout()" style="margin-top: auto; color: #f87171;"><i class="fas fa-sign-out-alt"></i> Logout</li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <nav class="top-nav">
+            <h2 id="tab-title">Student Dashboard</h2>
+            <div style="font-size: 0.9rem; color: var(--text-muted);">
+                <i class="fas fa-user-graduate"></i> <span id="top-learner-name">Loading...</span>
+            </div>
+        </nav>
+
+        <div class="dashboard-body">
+            <!-- Home / Overview -->
+            <div id="home" class="section active">
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Current Grade</div>
+                        <div class="stat-value" id="stat-grade">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Learner Number</div>
+                        <div class="stat-value" id="stat-number">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Stream</div>
+                        <div class="stat-value" id="stat-stream">-</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Pending Tasks</div>
+                    <div id="pending-assignments">Checking for assigned tasks...</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Recent Announcements</div>
+                    <div id="home-news">Fetching school news...</div>
+                </div>
+            </div>
+
+            <!-- AI Tutor Section -->
+            <div id="ai-tutor" class="section">
+                <div class="card" id="ai-intro">
+                    <div class="card-title">Interactive <span id="ai-subject-header">Subject</span> Tutor <span id="ai-grade-badge" class="badge badge-purple">Grade -</span></div>
+                    <p>Select a topic below to start your tutoring session and complete your assessment tasks.</p>
+                    <div id="ai-topics-list" style="display: grid; gap: 10px; margin-top: 1.5rem;">Loading topics...</div>
+                </div>
+
+                <div class="card" id="tutoring-container" style="display: none;">
+                    <div class="card-title">Tutor: <span id="tutoring-topic"></span></div>
+                    <div id="tutoring-content" style="line-height: 1.6; color: var(--text-main); margin-bottom: 2rem; background: #fdfcfb; padding: 1.5rem; border-radius: 8px; border: 1px solid #fee2e2;"></div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" onclick="proceedToQuiz()">Start Quiz Task</button>
+                        <button class="btn" style="background:#e2e8f0" onclick="prepareAITutor(currentAISubject)">Back to Topics</button>
+                    </div>
+                </div>
+
+                <div class="card" id="quiz-container" style="display: none;">
+                    <div class="card-title" style="color: var(--secondary);">
+                        <span id="quiz-topic">Algebra Task</span>
+                        <span id="quiz-timer" style="font-family: monospace; color: var(--danger);">10:00</span>
+                    </div>
+                    <div id="quiz-questions"></div>
+                    <button class="btn btn-primary" onclick="submitQuiz()" style="margin-top: 2rem; width: 100%;">Submit for Grading</button>
+                </div>
+            </div>
+
+            <!-- Performance / Grades -->
+            <div id="grades" class="section">
+                <div class="card">
+                    <div class="card-title">AI Learning Insights</div>
+                    <div id="ai-performance-updates" style="display: grid; gap: 1rem;"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Grade Progress Trend</div>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Subject Leaderboard</div>
+                    <select id="leaderboardSubject" class="form-control" style="margin-bottom: 1rem; width: auto;" aria-label="Select leaderboard subject" onchange="loadSubjectLeaderboard()"></select>
+                    <div id="leaderboardList"></div>
+                </div>
+            </div>
+
+            <!-- Subjects -->
+            <div id="subjects" class="section">
+                <div id="subjects-grid-view">
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-book-open"></i> Your Academic Subjects</div>
+                        <div id="subjects-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                            Loading your curriculum...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subject Workspace View -->
+                <div id="subject-workspace" style="display: none;">
+                    <button class="btn" style="margin-bottom: 1.5rem; background: var(--white); border: 1px solid #e2e8f0;" onclick="closeSubjectWorkspace()">
+                        <i class="fas fa-arrow-left"></i> Back to All Subjects
+                    </button>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+                        <div class="column">
+                            <div class="card" id="workspace-ai-intro">
+                                <div class="card-title">🤖 AI Tutor: <span id="ws-subject-title"></span></div>
+                                <p>Select a chapter from your textbook or curriculum to start a tutorial and assessment.</p>
+                                <div id="ws-topics-list" style="display: grid; gap: 10px; margin-top: 1rem;"></div>
+                            </div>
+
+                            <!-- Tutoring Content (Hidden by default) -->
+                            <div class="card" id="ws-tutoring-container" style="display: none;">
+                                <div class="card-title">📚 Lesson: <span id="ws-tutoring-topic"></span></div>
+                                <div id="ws-tutoring-content" style="line-height: 1.6; margin-bottom: 2rem; background: #fdfcfb; padding: 1.5rem; border-radius: 8px; border: 1px solid #fee2e2;"></div>
+                                <div style="display: flex; gap: 1rem;">
+                                    <button class="btn btn-primary" onclick="proceedToQuiz()">Start Assessment Task</button>
+                                    <button class="btn" style="background:#e2e8f0" onclick="openSubjectWorkspace(currentAISubject)">Back to Chapters</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="column">
+                            <div class="card">
+                                <div class="card-title"><i class="fas fa-trophy"></i> Subject Leaderboard</div>
+                                <div id="ws-leaderboard"></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title"><i class="fas fa-chart-line"></i> Your Progress</div>
+                                <div id="ws-mini-chart-container" style="height: 150px;">
+                                    <canvas id="wsMiniChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assessments -->
+            <div id="assessments" class="section">
+                <div class="card">
+                    <div class="card-title">Pending Teacher Assignments</div>
+                    <div id="pending-assessments-list" style="display: grid; gap: 10px;">
+                        Checking for assigned tasks...
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Continuous Assessment Reports</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Term</th>
+                                <th>Result</th>
+                                <th>Teacher Comments</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assessments-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Profile -->
+            <div id="profile" class="section">
+                <div class="card">
+                    <div class="card-title">Personal Information</div>
+                    <form id="updateProfileForm" onsubmit="updateProfile(event)">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="prof-name">Full Name</label>
+                                <input type="text" id="prof-name" class="form-control" required placeholder="Full Name">
+                            </div>
+                            <div class="form-group">
+                                <label for="prof-surname">Surname</label>
+                                <input type="text" id="prof-surname" class="form-control" required placeholder="Surname">
+                            </div>
+                            <div class="form-group">
+                                <label for="prof-email">Email (Read-only)</label>
+                                <input type="text" id="prof-email" class="form-control" disabled placeholder="Email">
+                            </div>
+                            <div class="form-group">
+                                <label for="prof-phone">Phone Number</label>
+                                <input type="text" id="prof-phone" class="form-control" placeholder="Phone Number">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="prof-address">Physical Address</label>
+                            <textarea id="prof-address" class="form-control" rows="3" placeholder="Physical Address"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/';
+
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            el.classList.add('active');
+            document.getElementById('tab-title').innerText = el.innerText;
+        }
+
+        let quizTimerInterval;
+        let currentTaskData;
+        let currentAISubject = '';
+        let currentAssessmentId = ''; // New: To track the active assessment session
+
+        async function fetchData(url) {
+            const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (resp.status === 401 || resp.status === 403) logout();
+            return resp.json();
+        }
+
+        async function openSubjectWorkspace(subject) {
+            currentAISubject = subject;
+            document.getElementById('subjects-grid-view').style.display = 'none';
+            document.getElementById('subject-workspace').style.display = 'block';
+            document.getElementById('ws-subject-title').innerText = subject;
+            
+            // Reset Workspace UI
+            document.getElementById('workspace-ai-intro').style.display = 'block';
+            document.getElementById('ws-tutoring-container').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'none';
+
+            // 1. Fetch Topics
+            const list = document.getElementById('ws-topics-list');
+            list.innerHTML = 'Reading textbook content...';
+            const topicsData = await fetchData(`/api/learner/topics?subject=${encodeURIComponent(subject)}`);
+            if (topicsData.error || !Array.isArray(topicsData) || topicsData.length === 0) {
+                list.innerHTML = `<p style="color: var(--text-muted);">No interactive chapters available for this subject yet.</p>`;
+            } else {
+                list.innerHTML = topicsData.map(t => `
+                    <button class="btn" style="text-align: left; background: var(--bg); border: 1px solid #e2e8f0; color: var(--primary); display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;" onclick="startTutoring('${t.id}')">
+                        <span><i class="fas fa-book-reader" style="margin-right: 10px; color: var(--secondary);"></i> ${t.topic}</span>
+                        ${t.isFromTextbook ? '<span class="badge" style="background:#0ea5e9; font-size:0.7rem; color:white;">Textbook Source</span>' : ''}
+                    </button>
+                `).join('');
+            }
+
+            // 2. Fetch Leaderboard
+            loadSubjectLeaderboard(subject, 'ws-leaderboard');
+        }
+
+        function closeSubjectWorkspace() {
+            document.getElementById('subjects-grid-view').style.display = 'block';
+            document.getElementById('subject-workspace').style.display = 'none';
+        }
+
+        // Modified startTutoring to use workspace IDs
+        async function startTutoring(topicId) {
+            const intro = document.getElementById('workspace-ai-intro');
+            const tutorContainer = document.getElementById('ws-tutoring-container');
+            
+            intro.innerHTML = `<div style="text-align:center; padding:2rem;"><i class="fas fa-brain fa-spin"></i> AI is fetching notes from your textbook...</div>`;
+
+            try {
+                const data = await fetchData(`/api/ai/task?subject=${encodeURIComponent(currentAISubject)}&topicId=${topicId}`);
+                if (data.error) throw new Error(data.error);
+
+                currentTaskData = data;
+                currentAssessmentId = data.assessmentId;
+                window.isTeacherAssignment = false;
+
+                intro.style.display = 'none';
+                tutorContainer.style.display = 'block';
+                document.getElementById('ws-tutoring-topic').innerText = (data.isFromTextbook ? '📚 ' : '🤖 ') + (data.topic || topicId);
+                
+                const safeExplanation = (data.explanation || '').replace(/\n/g, '<br>');
+                const safeExamples = (data.examples || '').replace(/\n/g, '<br>');
+
+                document.getElementById('ws-tutoring-content').innerHTML = `
+                    <div class="lesson-body" style="font-size: 1rem; line-height: 1.6; color: var(--text-main);">
+                        ${safeExplanation}
+                    </div>
+                    ${data.formula && data.formula !== 'none' ? `<div style="margin: 1.5rem 0; padding: 1rem; background: #f8fafc; border-radius: 8px; text-align: center; font-size: 1.2rem;">\\[ ${data.formula} \\]</div>` : ''}
+                    ${safeExamples ? `<div style="margin-top: 1.5rem; padding: 1.5rem; background: #f0f9ff; border-radius: 8px; border-left: 5px solid #0ea5e9;">
+                        <h6 style="color: #0369a1; font-weight: bold; margin-bottom: 10px;"><i class="fas fa-edit"></i> Detailed Worked Examples:</h6>
+                        <div style="color: #0c4a6e;">${safeExamples}</div>
+                    </div>` : ''}
+                    ${data.answerInstructions ? `<div style="margin-top:1rem; padding:1rem; background:#fffbeb; border-radius:8px; border-left:4px solid #fcd34d;">
+                        <strong><i class="fas fa-info-circle"></i> Instructions:</strong><br>${data.answerInstructions}
+                    </div>` : ''}
+                `;
+                
+                if (window.MathJax) MathJax.typesetPromise();
+            } catch (err) {
+                alert("Error: " + err.message);
+                openSubjectWorkspace(currentAISubject);
+            }
+        }
+
+        window.openAssignment = async function(id) {
+            try {
+                // Use the data already in the announcements list or fetch specifically
+                const assignments = await fetchData('/api/learner/assignments');
+                const task = assignments.find(a => a.id == id);
+                if (!task) return alert("Assignment data not found.");
+
+                // 1. Prepare Data
+                currentAISubject = task.subject_target;
+                
+                let questions = [];
+                try {
+                    questions = typeof task.assignment_data === 'string' ? JSON.parse(task.assignment_data) : task.assignment_data;
+                } catch(e) { console.error("Data parse error", e); }
+
+                currentTaskData = {
+                    topic: task.title,
+                    questions: questions,
+                    timeLimit: 1200 // 20 mins for teacher assignments
+                };
+                currentAssessmentId = id;
+                window.isTeacherAssignment = true;
+
+                // 2. Activate the Quiz Section directly (ai-tutor section houses the quiz engine)
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById('ai-tutor').classList.add('active');
+                document.getElementById('tab-title').innerText = "Assignment: " + task.title;
+
+                // 3. Hide AI Tutor specific intro screens and trigger quiz
+                document.getElementById('ai-intro').style.display = 'none';
+                document.getElementById('tutoring-container').style.display = 'none';
+                proceedToQuiz();
+            } catch (err) {
+                console.error("Failed to open assignment:", err);
+                alert("Could not load the assignment. Please try again.");
+            }
+        };
+
+        function proceedToQuiz() {
+            // Hide both AI Tutor and Subject Workspace intros to ensure clean state
+            document.getElementById('ws-tutoring-container').style.display = 'none';
+            document.getElementById('workspace-ai-intro').style.display = 'none';
+            document.getElementById('tutoring-container').style.display = 'none';
+            document.getElementById('ai-intro').style.display = 'none';
+            
+            const quizBox = document.getElementById('quiz-container');
+            quizBox.style.display = 'block';
+            quizBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            const task = currentTaskData;
+            if (!task || !task.questions || task.questions.length === 0) {
+                alert("This assignment contains no questions or could not be loaded. Please notify your teacher.");
+                location.reload();
+                return;
+            }
+            document.getElementById('quiz-topic').innerText = task.topic;
+            document.getElementById('quiz-timer').innerText = formatTime(task.timeLimit);
+            const questionsDiv = document.getElementById('quiz-questions');
+            questionsDiv.innerHTML = task.questions.map(q => `
+                <div class="form-group" style="margin-top: 1.5rem; padding: 1rem; background: var(--bg); border-radius: 8px;">
+                    <label>${q.id}. ${q.question}</label>
+                    <input type="text" class="form-control quiz-ans" data-id="${q.id}" placeholder="Your answer...">
+                </div>
+            `).join('');
+
+            let timeRemaining = task.timeLimit; // Use timeLimit from fetched task
+            quizTimerInterval = setInterval(() => {
+                timeRemaining--;
+                const mins = Math.floor(timeRemaining / 60);
+                const secs = timeRemaining % 60;
+                document.getElementById('quiz-timer').innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(quizTimerInterval);
+                    submitQuiz();
+                }
+            }, 1000);
+        }
+
+        async function submitQuiz() {
+            clearInterval(quizTimerInterval);
+            const inputs = document.querySelectorAll('.quiz-ans');
+            const answers = {};
+            inputs.forEach(i => answers[i.dataset.id] = i.value);
+
+            const btn = document.querySelector('#quiz-container .btn-primary');
+            btn.disabled = true;
+            btn.innerText = "Grading...";
+
+const endpoint = window.isTeacherAssignment ? '/api/learner/grade-assignment' : '/api/ai/grade-task';
+            try {
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        answers,
+                        assessmentId: currentAssessmentId,
+                        topic: currentTaskData.topic,
+                        totalQuestions: currentTaskData.questions.length,
+                        subject: currentAISubject
+                    })
+                });
+
+                const result = await resp.json();
+                
+                if (!resp.ok) {
+                    throw new Error(result.error || 'Failed to grade assessment');
+                }
+                
+                document.getElementById('quiz-container').innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-check-circle" style="font-size: 4rem; color: var(--success); margin-bottom: 1rem;"></i>
+                        <h2>Assessment Complete</h2>
+                        <div style="font-size: 3rem; font-weight: 800; margin: 1rem 0;">${result.score}%</div>
+                        <p style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem;">AI Insight: ${result.progressUpdate}</p>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;">${result.feedback}</p>
+                        
+                        <div style="text-align: left; margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
+                            <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem; color: var(--primary);">Review & Corrections</h3>
+                            ${result.results.map(r => `
+                                <div style="margin-bottom: 1rem; padding: 1.2rem; background: ${r.isCorrect ? '#f0fdf4' : '#fff1f2'}; border-radius: 8px; border-left: 4px solid ${r.isCorrect ? 'var(--success)' : '#f87171'};">
+                                    <p style="margin: 0 0 0.5rem 0; font-weight: 600;">Q: ${r.question}</p>
+                                    <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">Your Answer: <span style="color: ${r.isCorrect ? 'var(--success)' : '#b91c1c'}; font-weight: bold;">${r.userAnswer || '(No answer provided)'}</span></p>
+                                    ${!r.isCorrect ? `<p style="margin: 0; color: #166534; font-size: 0.9rem; padding-top: 5px; border-top: 1px dashed rgba(0,0,0,0.1);"><strong>AI Correction:</strong> ${r.correctAnswer}</p>` : ''}
+                                </div>
+                            `).join('')}
+                            
+                        </div>
+
+                        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+                            <button class="btn btn-primary" onclick="location.reload()">Back to Home</button>
+                            <button class="btn" style="background: #e2e8f0;" onclick="switchTab('assessments', document.querySelector('.nav-item:nth-child(3)'))">View in Reports</button>
+                        </div>
+                    </div>
+                `;
+                // Re-render MathJax for any LaTeX in corrections
+                if (window.MathJax) MathJax.typesetPromise();
+
+                // Refresh performance stats if they return home
+                loadProgress();
+                loadPerformance();
+            } catch (e) {
+                console.error(e);
+                alert('Grading Error: ' + e.message);
+                btn.disabled = false;
+                btn.innerText = "Submit for Grading";
+            }
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        async function loadProfile() {
+            const data = await fetchData('/api/profile');
+            document.getElementById('top-learner-name').innerText = `${data.full_name} ${data.surname}`;
+            document.getElementById('stat-grade').innerText = data.academic ? data.academic.grade : '-';
+            document.getElementById('ai-grade-badge').innerText = `Grade ${data.academic ? data.academic.grade : '-'}`;
+            document.getElementById('stat-number').innerText = data.academic ? data.academic.learner_number : '-';
+            document.getElementById('stat-stream').innerText = data.academic ? data.academic.stream : 'General';
+
+            // Fill Profile Form
+            document.getElementById('prof-name').value = data.full_name || '';
+            document.getElementById('prof-surname').value = data.surname || '';
+            document.getElementById('prof-email').value = data.email;
+            document.getElementById('prof-phone').value = data.phone || '';
+            document.getElementById('prof-address').value = data.physical_address || '';
+
+            const lbSub = document.getElementById('leaderboardSubject');
+            // Fetch subjects with dynamic AI capability flags from the server
+            const subjectData = await fetchData('/api/learner/subjects');
+
+            if (subjectData.subjects) {
+                lbSub.innerHTML = subjectData.subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                loadSubjectLeaderboard();
+
+                document.getElementById('subjects-list').innerHTML = subjectData.subjects.map(s => {
+                    const hasAITutor = s.aiEnabled;
+                    const subjectName = s.name;
+                    
+                    return `
+                        <div class="card" style="border-top: 4px solid var(--secondary); margin-bottom:0;">
+                            <h3 style="margin-top:0;">${subjectName}</h3>
+                            <div style="display:flex; gap:5px; margin-bottom:1rem;">
+                                ${s.hasTextbook ? '<span class="badge" style="background:#0ea5e9; color:white;">Textbook Ready</span>' : ''}
+                                ${hasAITutor ? '<span class="badge badge-purple">AI Active</span>' : ''}
+                            </div>
+                            <button class="btn btn-primary" style="width:100%" onclick="openSubjectWorkspace('${subjectName}')">
+                                <i class="fas fa-external-link-alt"></i> Open Workspace
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        async function loadProgress() {
+            const data = await fetchData('/api/learner/progress');
+            document.getElementById('assessments-table').innerHTML = data.map(p => `
+                <tr>
+                    <td><strong>${p.subject}</strong></td>
+                    <td>${p.term}</td>
+                    <td><span class="badge badge-purple">${p.grade}%</span></td>
+                    <td>${p.notes || 'No comments'}</td>
+                    <td>${new Date(p.date).toLocaleDateString()}</td>
+                </tr>
+            `).join('');
+
+            // Also load Pending Assignments for the Assessments tab
+            try {
+                const assignments = await fetchData('/api/learner/assignments');
+                const pendingList = document.getElementById('pending-assessments-list');
+                if (pendingList) {
+                    pendingList.innerHTML = assignments.length ? assignments.map(a => `
+                        <div style="padding: 1rem; background: var(--bg); border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: bold; color: var(--primary);">${a.title}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">${a.subject_target} | Sent on ${new Date(a.created_at).toLocaleDateString()}</div>
+                            </div>
+                            <button class="btn btn-primary" style="padding: 5px 15px;" onclick="openAssignment(${a.id})">
+                                Open Task
+                            </button>
+                        </div>
+                    `).join('') : '<p style="font-size:0.9rem; color:var(--text-muted);">No pending assignments at the moment.</p>';
+                }
+            } catch (err) { console.error("Assessments tab error:", err); }
+        }
+
+        async function loadPerformance() {
+            const data = await fetchData('/api/learner/progress');
+            renderGradesChart(data);
+
+            const aiUpdates = data.filter(p => p.notes && p.notes.startsWith('AI Progress Update:'));
+            
+            document.getElementById('ai-performance-updates').innerHTML = aiUpdates.length ? aiUpdates.map(u => `
+                <div style="padding: 1rem; border-left: 4px solid var(--secondary); background: var(--bg); border-radius: 0 8px 8px 0;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span><strong>${u.subject}</strong></span>
+                        <span>${new Date(u.date).toLocaleDateString()}</span>
+                    </div>
+                    <div style="font-weight: 600; font-size: 0.95rem;">${u.notes.replace('AI Progress Update: ', '')}</div>
+                    <div style="margin-top: 8px;"><span class="badge badge-purple">${u.grade}% Accuracy</span></div>
+                </div>
+            `).join('') : '<p style="color: var(--text-muted); padding: 1rem; text-align: center;">No AI performance insights available yet. Complete a task to see updates.</p>';
+        }
+
+        let perfChart;
+        function renderGradesChart(data) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            if (perfChart) perfChart.destroy();
+
+            // Group and sort data
+            const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            perfChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedData.map(p => new Date(p.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Assessment Score (%)',
+                        data: sortedData.map(p => p.grade),
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 100 }
+                    }
+                }
+            });
+        }
+
+        async function loadSubjectLeaderboard(subject, containerId = 'leaderboardList') {
+            subject = subject || document.getElementById('leaderboardSubject').value;
+            if (!subject) return;
+            
+            const board = await fetchData(`/api/ai/leaderboard?subject=${encodeURIComponent(subject)}`);
+            const container = document.getElementById(containerId);
+            
+            if (!board || board.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted)">No data for this leaderboard yet.</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="background: var(--bg); border-radius: 8px; overflow: hidden;">
+                    ${board.map((entry, i) => `
+                        <div style="padding: 10px 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; ${i === 0 ? 'background: #fffbeb;' : ''}">
+                            <span><strong>#${i+1}</strong> Learner ${entry.rank_id}</span>
+                            <span class="badge ${i === 0 ? 'badge-purple' : ''}" style="background: var(--secondary); color: white;">${entry.score}%</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function loadNews() {
+            const news = await fetchData('/api/announcements');
+            document.getElementById('home-news').innerHTML = news.length ? news.slice(0, 3).map(n => `
+                <div style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--bg);">
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">${new Date(n.created_at).toDateString()}</div>
+                    <div style="font-weight: 600;">${n.title}</div>
+                    <div style="font-size: 0.9rem;">${n.content.substring(0, 100)}...</div>
+                </div>
+            `).join('') : 'No news found.';
+            
+            // Also load specific assignments
+            const assignments = await fetchData('/api/learner/assignments');
+            document.getElementById('pending-assignments').innerHTML = assignments.length ? assignments.map(a => `
+                <div style="padding: 1rem; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: bold; color: #92400e;">${a.title}</div>
+                        <div style="font-size: 0.8rem; color: #b45309;">Sent on ${new Date(a.created_at).toLocaleDateString()}</div>
+                    </div>
+                    <button class="btn btn-primary" style="background:#d97706; padding: 5px 15px;" onclick="openAssignment(${a.id})">
+                        Open Task
+                    </button>
+                </div>
+            `).join('') : '<p style="font-size:0.9rem; color:var(--text-muted);">No pending assignments. Well done!</p>';
+        }
+
+        async function updateProfile(e) {
+            e.preventDefault();
+            const payload = {
+                full_name: document.getElementById('prof-name').value,
+                surname: document.getElementById('prof-surname').value,
+                phone: document.getElementById('prof-phone').value,
+                physical_address: document.getElementById('prof-address').value
+            };
+            
+            const resp = await fetch('/api/profile', {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (resp.ok) {
+                alert('Profile updated successfully!');
+                loadProfile();
+            } else {
+                alert('Failed to update profile.');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+
+        loadProfile();
+        loadProgress();
+        loadPerformance();
+        loadNews();
+    </script>
+    <script src="/js/sidebar-toggle.js"></script>
+</body>
+</html>
